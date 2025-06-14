@@ -1,5 +1,1 @@
 DROP TABLE IF EXISTS pomodoro;
-
-DROP TABLE IF EXISTS user_auth_token;
-
-DROP TABLE IF EXISTS users;

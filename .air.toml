@@ -1,0 +1,12 @@
+[build]
+  cmd = "go build -o ./tmp/main ./cmd/pomofocus"
+  bin = "./tmp/main"
+  full_bin = "APP_ENV=dev ./tmp/main"
+  delay = 1000 # ms
+  log = "tmp/build-errors.log"
+  exclude_dir = ["tmp", "shared"]
+  include_ext = ["go", "tpl", "tmpl", "html"]
+
+[log]
+  color = true
+  time = true
