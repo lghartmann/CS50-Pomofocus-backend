@@ -1,6 +1,6 @@
 CREATE TABLE
     IF NOT EXISTS pomodoro (
-        id SERIAL PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id TEXT NOT NULL,
         duration TEXT NOT NULL,
         pause_duration TEXT NOT NULL,
