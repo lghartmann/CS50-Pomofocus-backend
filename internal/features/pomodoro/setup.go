@@ -13,6 +13,8 @@ func SetupRoutesAndInjection(db *sql.DB, r *chi.Mux) {
 	handler := NewPomodoroHandler(service)
 
 	r.With(middleware.AuthMiddleware).Get("/", handler.Search)
+	r.With(middleware.AuthMiddleware).Get("/{id}", handler.GetById)
 	r.With(middleware.AuthMiddleware).Post("/", handler.Create)
+	r.With(middleware.AuthMiddleware).Patch("/{id}", handler.Update)
 	r.With(middleware.AuthMiddleware).Delete("/{id}", handler.Inactivate)
 }

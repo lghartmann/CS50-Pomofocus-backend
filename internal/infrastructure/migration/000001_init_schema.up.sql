@@ -8,5 +8,6 @@ CREATE TABLE
         distraction NUMERIC(3, 1) NOT NULL CHECK(distraction BETWEEN 0.0 AND 10.0),
         productivity NUMERIC(3, 1) NOT NULL CHECK(productivity BETWEEN 0.0 AND 10.0),
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NULL,
         deleted_at TIMESTAMPTZ DEFAULT NULL
     );

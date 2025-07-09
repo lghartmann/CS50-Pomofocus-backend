@@ -18,32 +18,17 @@ func NewPomodoroHandler(service IPomodoroService) IPomodoroHandler {
 	return &PomodoroHandler{service: service}
 }
 
-func (p *PomodoroHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var dto PomodoroCreateDto
-	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	err := p.service.Create(dto, r.Context())
-	if err != nil {
-		http.Error(w, fmt.Errorf("unable to create pomodoro: %v", err).Error(), http.StatusBadRequest)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-}
-
-func (p *PomodoroHandler) Inactivate(w http.ResponseWriter, r *http.Request) {
+func (p *PomodoroHandler) GetById(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	err := p.service.Inactivate(id, r.Context())
+	pomo, err := p.service.GetById(id, r.Context())
 	if err != nil {
-		http.Error(w, fmt.Errorf("unable to delete pomodoro: %v", err).Error(), http.StatusInternalServerError)
-		return
+		http.Error(w, fmt.Errorf("unable to get pomodoro by id: %v", err).Error(), http.StatusBadRequest)
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(pomo)
 }
 
 func (p *PomodoroHandler) Search(w http.ResponseWriter, r *http.Request) {
@@ -65,4 +50,50 @@ func (p *PomodoroHandler) Search(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(res)
+}
+
+func (p *PomodoroHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var dto PomodoroCreateDto
+	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err := p.service.Create(dto, r.Context())
+	if err != nil {
+		http.Error(w, fmt.Errorf("unable to create pomodoro: %v", err).Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (p *PomodoroHandler) Update(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var dto PomodoroUpdateDto
+	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err := p.service.Update(id, dto, r.Context())
+	if err != nil {
+		http.Error(w, fmt.Errorf("unable to update pomodoro: %v", err).Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (p *PomodoroHandler) Inactivate(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	err := p.service.Inactivate(id, r.Context())
+	if err != nil {
+		http.Error(w, fmt.Errorf("unable to delete pomodoro: %v", err).Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

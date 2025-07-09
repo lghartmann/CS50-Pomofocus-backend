@@ -3,6 +3,8 @@ package pomodoro
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/lghartmann/CS50-Pomofocus-backend/internal/middleware"
@@ -24,7 +26,7 @@ func (p *PomodoroRepository) GetById(id string, ctx context.Context) (PomodoroDt
 		return PomodoroDto{}, sql.ErrNoRows
 	}
 
-	query := "SELECT id, duration, pause_duration, effort, distraction, productivity, created_at FROM pomodoro WHERE user_id = $1 AND id = $2 AND deleted_at IS NULL LIMIT 1;"
+	query := "SELECT id, duration, pause_duration, effort, distraction, productivity, created_at, updated_at FROM pomodoro WHERE user_id = $1 AND id = $2 AND deleted_at IS NULL LIMIT 1;"
 
 	var pomo PomodoroDto
 
@@ -36,6 +38,7 @@ func (p *PomodoroRepository) GetById(id string, ctx context.Context) (PomodoroDt
 		&pomo.Distraction,
 		&pomo.Productivity,
 		&pomo.CreatedAt,
+		&pomo.UpdatedAt,
 	)
 
 	return pomo, err
@@ -49,7 +52,14 @@ func (p *PomodoroRepository) Search(ctx context.Context) (endpointtypes.SearchRe
 		return endpointtypes.SearchResponse[PomodoroDto]{}, sql.ErrNoRows
 	}
 
-	query := "SELECT id, duration, pause_duration, effort, distraction, productivity, created_at FROM pomodoro WHERE user_id = $1 AND deleted_at IS NULL OFFSET $2 LIMIT $3;"
+	countQuery := "SELECT COUNT(*) FROM pomodoro WHERE user_id = $1 AND deleted_at IS NULL;"
+	var totalCount int
+	err := p.db.QueryRowContext(ctx, countQuery, userId).Scan(&totalCount)
+	if err != nil {
+		return endpointtypes.SearchResponse[PomodoroDto]{}, err
+	}
+
+	query := "SELECT id, duration, pause_duration, effort, distraction, productivity, created_at, updated_at FROM pomodoro WHERE user_id = $1 AND deleted_at IS NULL OFFSET $2 LIMIT $3;"
 
 	var res []PomodoroDto
 
@@ -69,6 +79,7 @@ func (p *PomodoroRepository) Search(ctx context.Context) (endpointtypes.SearchRe
 			&dto.Distraction,
 			&dto.Productivity,
 			&dto.CreatedAt,
+			&dto.UpdatedAt,
 		)
 		if err != nil {
 			return endpointtypes.SearchResponse[PomodoroDto]{}, err
@@ -76,7 +87,7 @@ func (p *PomodoroRepository) Search(ctx context.Context) (endpointtypes.SearchRe
 		res = append(res, dto)
 	}
 
-	return endpointtypes.SearchResponse[PomodoroDto]{Data: res}, nil
+	return endpointtypes.SearchResponse[PomodoroDto]{Data: res, Count: totalCount}, nil
 }
 
 func (p *PomodoroRepository) Create(dto PomodoroRepositoryCreateDto, ctx context.Context) error {
@@ -84,6 +95,59 @@ func (p *PomodoroRepository) Create(dto PomodoroRepositoryCreateDto, ctx context
 
 	_, err := p.db.Exec(query, dto.UserID, dto.Duration, dto.PauseDuration, dto.Effort, dto.Distraction, dto.Productivity)
 
+	return err
+}
+
+func (p *PomodoroRepository) Update(id string, dto PomodoroUpdateDto, ctx context.Context) error {
+	userId, ok := middleware.GetUserIDFromContext(ctx)
+	if !ok {
+		return sql.ErrNoRows
+	}
+
+	var setParts []string
+	var args []any
+	argIndex := 1
+
+	if dto.Duration != nil {
+		setParts = append(setParts, fmt.Sprintf("duration = $%d", argIndex))
+		args = append(args, *dto.Duration)
+		argIndex++
+	}
+	if dto.PauseDuration != nil {
+		setParts = append(setParts, fmt.Sprintf("pause_duration = $%d", argIndex))
+		args = append(args, *dto.PauseDuration)
+		argIndex++
+	}
+	if dto.Effort != nil {
+		setParts = append(setParts, fmt.Sprintf("effort = $%d", argIndex))
+		args = append(args, *dto.Effort)
+		argIndex++
+	}
+	if dto.Distraction != nil {
+		setParts = append(setParts, fmt.Sprintf("distraction = $%d", argIndex))
+		args = append(args, *dto.Distraction)
+		argIndex++
+	}
+	if dto.Productivity != nil {
+		setParts = append(setParts, fmt.Sprintf("productivity = $%d", argIndex))
+		args = append(args, *dto.Productivity)
+		argIndex++
+	}
+
+	if len(setParts) == 0 {
+		return fmt.Errorf("no fields to update")
+	}
+
+	setParts = append(setParts, fmt.Sprintf("updated_at = $%d", argIndex))
+	args = append(args, time.Now())
+	argIndex++
+
+	args = append(args, userId, id)
+
+	query := fmt.Sprintf("UPDATE pomodoro SET %s WHERE user_id = $%d AND id = $%d AND deleted_at IS NULL;",
+		strings.Join(setParts, ", "), argIndex, argIndex+1)
+
+	_, err := p.db.ExecContext(ctx, query, args...)
 	return err
 }
 

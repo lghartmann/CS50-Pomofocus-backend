@@ -1,6 +1,6 @@
 package endpointtypes
 
 type SearchResponse[T any] struct {
-	Data  []T
-	Count int
+	Data  []T `json:"data"`
+	Count int `json:"count"`
 }
