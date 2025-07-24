@@ -44,7 +44,7 @@ func (p *PomodoroService) Create(dto PomodoroCreateDto, ctx context.Context) err
 		Productivity:  dto.Productivity,
 	}, ctx)
 	if err != nil {
-		return fmt.Errorf("error inserting pomodor in database: %v", err)
+		return fmt.Errorf("error inserting pomodoro in database: %v", err)
 	}
 
 	return nil
