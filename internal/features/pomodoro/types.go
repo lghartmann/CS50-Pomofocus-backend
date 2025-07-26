@@ -10,6 +10,7 @@ import (
 
 type IPomodoroRepository interface {
 	GetById(id string, ctx context.Context) (PomodoroDto, error)
+	SearchDashboard(ctx context.Context) (endpointtypes.SearchResponse[PomodoroDto], error)
 	Search(ctx context.Context) (endpointtypes.SearchResponse[PomodoroDto], error)
 	Create(dto PomodoroRepositoryCreateDto, ctx context.Context) error
 	Update(id string, dto PomodoroUpdateDto, ctx context.Context) error
@@ -18,6 +19,7 @@ type IPomodoroRepository interface {
 
 type IPomodoroService interface {
 	GetById(id string, ctx context.Context) (PomodoroDto, error)
+	SearchDashboard(ctx context.Context) (endpointtypes.SearchResponse[PomodoroDto], error)
 	Search(ctx context.Context) (endpointtypes.SearchResponse[PomodoroDto], error)
 	Create(dto PomodoroCreateDto, ctx context.Context) error
 	Update(id string, dto PomodoroUpdateDto, ctx context.Context) error
@@ -26,6 +28,7 @@ type IPomodoroService interface {
 
 type IPomodoroHandler interface {
 	GetById(w http.ResponseWriter, r *http.Request)
+	SearchDashboard(w http.ResponseWriter, r *http.Request)
 	Search(w http.ResponseWriter, r *http.Request)
 	Create(w http.ResponseWriter, r *http.Request)
 	Update(w http.ResponseWriter, r *http.Request)

@@ -44,6 +44,50 @@ func (p *PomodoroRepository) GetById(id string, ctx context.Context) (PomodoroDt
 	return pomo, err
 }
 
+func (p *PomodoroRepository) SearchDashboard(ctx context.Context) (endpointtypes.SearchResponse[PomodoroDto], error) {
+	startDate := pkg.GetStartDateFromOptions(ctx)
+	endDate := pkg.GetEndDateFromOptions(ctx)
+	userId, ok := middleware.GetUserIDFromContext(ctx)
+	if !ok {
+		return endpointtypes.SearchResponse[PomodoroDto]{}, fmt.Errorf("no userId in context")
+	}
+
+	countQuery := "SELECT COUNT(*) FROM pomodoro WHERE user_id = $1 AND deleted_at IS NULL AND created_at BETWEEN $2 AND $3;"
+	var totalCount int
+	err := p.db.QueryRowContext(ctx, countQuery, userId, startDate, endDate).Scan(&totalCount)
+	if err != nil {
+		return endpointtypes.SearchResponse[PomodoroDto]{}, err
+	}
+
+	query := "SELECT id, duration, pause_duration, effort, distraction, productivity, created_at, updated_at FROM pomodoro WHERE user_id = $1 AND deleted_at IS NULL AND created_at BETWEEN $2 AND $3;"
+
+	var res []PomodoroDto
+	rows, err := p.db.QueryContext(ctx, query, userId, startDate, endDate)
+	if err != nil {
+		return endpointtypes.SearchResponse[PomodoroDto]{}, err
+	}
+	for rows.Next() {
+		var dto PomodoroDto
+		err := rows.Scan(
+			&dto.ID,
+			&dto.Duration,
+			&dto.PauseDuration,
+			&dto.Effort,
+			&dto.Distraction,
+			&dto.Productivity,
+			&dto.CreatedAt,
+			&dto.UpdatedAt,
+		)
+		if err != nil {
+			return endpointtypes.SearchResponse[PomodoroDto]{}, err
+		}
+		res = append(res, dto)
+	}
+
+	return endpointtypes.SearchResponse[PomodoroDto]{Data: res, Count: totalCount}, nil
+
+}
+
 func (p *PomodoroRepository) Search(ctx context.Context) (endpointtypes.SearchResponse[PomodoroDto], error) {
 	start := pkg.GetStartFromOptions(ctx)
 	offset := pkg.GetOffsetFromOptions(ctx)

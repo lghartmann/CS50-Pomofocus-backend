@@ -25,6 +25,10 @@ func (p *PomodoroService) GetById(id string, ctx context.Context) (PomodoroDto, 
 	return pomodoro, nil
 }
 
+func (p *PomodoroService) SearchDashboard(ctx context.Context) (endpointtypes.SearchResponse[PomodoroDto], error) {
+	return p.repository.SearchDashboard(ctx)
+}
+
 func (p *PomodoroService) Search(ctx context.Context) (endpointtypes.SearchResponse[PomodoroDto], error) {
 	return p.repository.Search(ctx)
 }

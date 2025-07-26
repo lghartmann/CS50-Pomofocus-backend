@@ -9,9 +9,11 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	"github.com/lghartmann/CS50-Pomofocus-backend/internal/features/pomodoro"
-	"github.com/lghartmann/CS50-Pomofocus-backend/internal/middleware"
+	custommiddleware "github.com/lghartmann/CS50-Pomofocus-backend/internal/middleware"
 )
 
 type Config struct {
@@ -27,7 +29,7 @@ func init() {
 		log.Fatalf("unable to load envs: %v", err)
 	}
 
-	middleware.JwtSecret.Value = os.Getenv("JWT_SECRET")
+	custommiddleware.JwtSecret.Value = os.Getenv("JWT_SECRET")
 
 	cfg.DB_URI = os.Getenv("DB_URI")
 	cfg.HTTP_ADDRESS = os.Getenv("HTTP_ADDRESS")
@@ -50,5 +52,26 @@ func main() {
 }
 
 func setup(db *sql.DB, r *chi.Mux) {
-	pomodoro.SetupRoutesAndInjection(db, r)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
+
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
+	r.Route("/api", func(r chi.Router) {
+		r.Route("/pomodoro", func(r chi.Router) {
+			pomodoro.SetupRoutesAndInjection(db, r)
+		})
+	})
 }

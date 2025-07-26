@@ -31,6 +31,24 @@ func (p *PomodoroHandler) GetById(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(pomo)
 }
 
+func (p *PomodoroHandler) SearchDashboard(w http.ResponseWriter, r *http.Request) {
+	startDate := r.URL.Query().Get("start_date")
+	endDate := r.URL.Query().Get("end_date")
+
+	ctx := context.WithValue(r.Context(), "start_date", startDate)
+	ctx = context.WithValue(ctx, "end_date", endDate)
+
+	res, err := p.service.SearchDashboard(ctx)
+	if err != nil {
+		http.Error(w, "error searching for pomodoros", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
+}
+
 func (p *PomodoroHandler) Search(w http.ResponseWriter, r *http.Request) {
 	startStr := r.URL.Query().Get("start")
 	offsetStr := r.URL.Query().Get("offset")
