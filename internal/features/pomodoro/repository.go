@@ -61,7 +61,7 @@ func (p *PomodoroRepository) SearchDashboard(ctx context.Context) (endpointtypes
 
 	query := "SELECT id, duration, pause_duration, effort, distraction, productivity, created_at, updated_at FROM pomodoro WHERE user_id = $1 AND deleted_at IS NULL AND created_at BETWEEN $2 AND $3;"
 
-	var res []PomodoroDto
+	res := make([]PomodoroDto, 0)
 	rows, err := p.db.QueryContext(ctx, query, userId, startDate, endDate)
 	if err != nil {
 		return endpointtypes.SearchResponse[PomodoroDto]{}, err
@@ -105,7 +105,7 @@ func (p *PomodoroRepository) Search(ctx context.Context) (endpointtypes.SearchRe
 
 	query := "SELECT id, duration, pause_duration, effort, distraction, productivity, created_at, updated_at FROM pomodoro WHERE user_id = $1 AND deleted_at IS NULL OFFSET $2 LIMIT $3;"
 
-	var res []PomodoroDto
+	res := make([]PomodoroDto, 0)
 
 	rows, err := p.db.QueryContext(ctx, query, userId, start, offset)
 	if err != nil {
