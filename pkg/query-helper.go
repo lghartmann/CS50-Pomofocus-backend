@@ -26,8 +26,8 @@ func GetOffsetFromOptions(ctx context.Context) int {
 	return 10
 }
 
-func GetStartDateFromOptions(ctx context.Context) time.Time {
-	fallBack := time.Now().AddDate(0, 0, 7)
+func GetStartDateFromOptions(ctx context.Context) string {
+	fallBack := time.Now().AddDate(0, 0, -7).Format(time.RFC3339)
 	s := ctx.Value(start_date)
 	str, ok := s.(string)
 	if !ok {
@@ -35,14 +35,14 @@ func GetStartDateFromOptions(ctx context.Context) time.Time {
 	}
 
 	if v, err := time.Parse(time.RFC3339, str); err == nil {
-		return v
+		return v.Format(time.RFC3339)
 	}
 
 	return fallBack
 }
 
-func GetEndDateFromOptions(ctx context.Context) time.Time {
-	fallBack := time.Now()
+func GetEndDateFromOptions(ctx context.Context) string {
+	fallBack := time.Now().Format(time.RFC3339)
 	s := ctx.Value(end_date)
 	str, ok := s.(string)
 	if !ok {
@@ -50,7 +50,7 @@ func GetEndDateFromOptions(ctx context.Context) time.Time {
 	}
 
 	if v, err := time.Parse(time.RFC3339, str); err == nil {
-		return v
+		return v.Format(time.RFC3339)
 	}
 
 	return fallBack
